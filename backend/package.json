@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "dev": "ts-node src/server/index.ts"
+    "dev": "ts-node src/server/index.ts",
+    "build": "npm i"
   },
   "keywords": [],
   "author": "",
