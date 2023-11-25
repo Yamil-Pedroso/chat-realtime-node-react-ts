@@ -3,7 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { Server } from 'socket.io';
-import { createServer } from 'node:http';
+import { createServer } from 'http';
 
 dotenv.config();
 
