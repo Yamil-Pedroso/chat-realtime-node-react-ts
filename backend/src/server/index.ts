@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
+import { createClient } from '@libsql/client';
 
 dotenv.config();
 
@@ -17,9 +18,28 @@ app.use(morgan('dev'));
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", 
+    origin: "*",
   }
 });
+
+const db = createClient({
+  url: "libsql://welcome-blue-shield-yamil-pedroso.turso.io",
+  authToken: process.env.DB_TOKEN,
+});
+
+async function initializeDatabase() {
+  try {
+    await db.execute(`CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      content TEXT
+    )`);
+    console.log("Database table 'messages' created successfully.");
+  } catch (error) {
+    console.error("Error creating database table:", error);
+  }
+}
+
+initializeDatabase();
 
 io.on("connection", (socket) => {
   console.log("a user is connected!");
@@ -28,11 +48,41 @@ io.on("connection", (socket) => {
     console.log("a user disconnected!");
   });
 
-  socket.on("chat-message", (message) => {
-    io.emit("chat-message", message);
-    console.log('message: ' + message);
-  });
+  socket.on("chat-message", async (message) => {
+    let result
+    try {
+      result = await db.execute({
+          sql: 'INSERT INTO messages (content) VALUES (:message)',
+          args: { message }  // to prevent SQL injection
+        });
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    if (result.lastInsertRowid !== undefined) {
+      io.emit("chat-message", message, result.lastInsertRowid.toString());
+      console.log('message: ' + message);
+    } else {
+      console.error("Unable to retrieve the ROWID of the last inserted row.");
+    }
+
+    if (!socket.recovered) {
+      try {
+        const results = await db.execute({
+          sql: 'SELECT id, content FROM messages WHERE id > ?',
+          args: ["???"]
+        });
+
+        } catch (error) {
+          console.error(error);
+          return;
+        }
+    }
+  } );
 });
+
+
 
 
 app.get('/', (req: Request, res: Response) => {
@@ -47,4 +97,5 @@ app.get('/api/v1/message', (req: Request, res: Response) => {
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-});
+}
+);

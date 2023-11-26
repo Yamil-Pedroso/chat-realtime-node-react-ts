@@ -1,51 +1,54 @@
-import { Section, Form, Input, Button } from "./styles";
-import { useState, useEffect } from "react";
-import socket from "../../services/ioSocket";
+import { Section, Form, Input, Button } from './styles'
+import { useState, useEffect } from 'react'
+import socket from '../../services/ioSocket'
 
 const MyForm = () => {
-  const [message, setMessage] = useState("");
-   
+  const [message, setMessage] = useState('')
+
   useEffect(() => {
+    socket.on('auth', (data) => {
+      socket.emit('auth', {
+        serverOffset: 0,
+      })
+      console.log('Authenticating...', data)
+    })
+
     socket.on('connection', () => {
-        console.log('Connected to the server');
-      });
-    
-    socket.on('chat-message', (message) => {
-      console.log('Received message:', message);
-    });
-  
+      console.log('Connected to the server')
+    })
+
+    socket.on('chat-message', (message, rowId) => {
+      console.log('Received message:', message)
+      console.log('Server offset:', rowId)
+    })
+
     socket.on('connection', (data) => {
-        console.log(data);
-        setMessage(data)
-    });
-
-}
-, [message]);
-
+      console.log(data)
+      setMessage(data)
+    })
+  }, [message])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    socket.emit("chat-message", message);
-    setMessage("");
-  };
+    e.preventDefault()
+    socket.emit('chat-message', message, 0)
+    setMessage('')
+  }
 
   return (
     <Section>
-      <Form 
-
-      onSubmit={handleSubmit}>
+      <Form onSubmit={handleSubmit}>
         <Input
           type="text"
           name="message"
           id="input-message"
           placeholder="Write a Message"
-          value={message} 
+          value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
         <Button type="submit">Submit</Button>
-      </Form >
+      </Form>
     </Section>
-  );
-};
+  )
+}
 
-export default MyForm;
+export default MyForm
