@@ -6,10 +6,8 @@ const MyForm = () => {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    socket.on('auth', (data) => {
+    socket.on('auth', async (data) => {
       socket.emit('auth', {
-        token: 'my-token',
-        username: 'yami',
         serverOffset: 0,
       })
       console.log('Authenticating...', data)
