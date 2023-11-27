@@ -6,9 +6,10 @@ const MyForm = () => {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    socket.on('auth', async (data) => {
+    socket.on('auth', (data) => {
       socket.emit('auth', {
-        username: await getUserName(),
+        token: 'my-token',
+        username: 'yami',
         serverOffset: 0,
       })
       console.log('Authenticating...', data)
@@ -28,20 +29,6 @@ const MyForm = () => {
       setMessage(data)
     })
   }, [message])
-
-  const getUserName = async () => {
-    const username = localStorage.getItem('username')
-    if (username) {
-      console.log('User exists:', username)
-      return username
-    }
-
-    const res = await fetch('https://randomuser.me/api/users/random_user')
-    const { usernmane: randomUsername } = await res.json()
-
-    localStorage.setItem('username', randomUsername)
-    return randomUsername
-  }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
