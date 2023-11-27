@@ -32,6 +32,7 @@ async function initializeDatabase() {
     await db.execute(`CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       content TEXT
+      user TEXT
     )`);
     console.log("Database table 'messages' created successfully.");
   } catch (error) {
@@ -67,12 +68,20 @@ io.on("connection", (socket) => {
       console.error("Unable to retrieve the ROWID of the last inserted row.");
     }
 
+    console.log('auth');
+    console.log(socket.handshake.auth);
+
     if (!socket.recovered) {
       try {
         const results = await db.execute({
           sql: 'SELECT id, content FROM messages WHERE id > ?',
-          args: ["???"]
+          args: [socket.handshake.auth.serverOffset ?? 0],
         });
+
+        results.rows.forEach((row: any) => {
+          socket.emit("chat-message", row.content, row.id.toString());
+        }
+        );
 
         } catch (error) {
           console.error(error);
